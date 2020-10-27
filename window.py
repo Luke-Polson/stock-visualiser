@@ -34,16 +34,15 @@ class Window:
 
     def populate_welcome(self):
 
-
         self.ticker_label = tk.Label(self.welcome_window, text="Enter a stock ticker, eg 'AAPL'",
                                      font=('', 20), padx=10, pady=10)
 
-        self.ticker_label.grid(row=0,column=0)
+        self.ticker_label.grid(row=0, column=0)
 
         self.button1 = tk.Button(self.welcome_window, text='Go', width=20, pady=7, command=self.goto_main)
         self.ticker_entry = tk.Entry(self.welcome_window, textvariable=tk.StringVar)
 
-        self.button1.grid(row=2,column=0, pady=10)
+        self.button1.grid(row=2, column=0, pady=10)
         self.ticker_entry.grid(row=1, column=0, pady=10)
 
     def goto_main(self):
@@ -59,35 +58,41 @@ class Window:
 
     def populate_main(self, data, ticker):
 
-        change_stock = tk.Button(self.main_window, text="Change", command=self.change_stock)
-        change_stock.pack()
+        exit_button = tk.Button(self.main_window, text="Exit", command=self.exit, padx=5, pady=5)
+        exit_button.pack(side=tk.TOP, pady=10)
 
         fig = plt.Figure()
         ax = fig.add_subplot(111)
         chart_type = FigureCanvasTkAgg(fig, self.main_window)
-        chart_type.get_tk_widget().pack()
+        chart_type.get_tk_widget().pack(side=tk.TOP)
+
+        change_stock = tk.Button(self.main_window, text="Change", command=self.change_stock, pady=5, padx=5)
+        change_stock.pack(pady=10, padx=10, side=tk.BOTTOM)
 
         # plot the closing prices for the past year
         data['Adj Close'][-365:].plot(title="Stock Price: " + ticker, ax=ax)
+
+        # calculate standard deviation for the stock price over last 1000 days
+        sigma = np.std([price for price in data['Adj Close'][-1000:]])
+        volatility_label = tk.Label(self.main_window, text="Volatility: ${:.3f}".format(sigma), padx=10)
+        volatility_label.pack(side=tk.BOTTOM)
 
         # closing price from the day before, and closing price from the current day
         opening = tk.Label(self.main_window, text="Opening: ${:.3f}".format(data['Adj Close'][-2]))
         closing = tk.Label(self.main_window, text="Closing: ${:.3f}".format(data['Adj Close'][-1]))
 
-        opening.pack(side=tk.LEFT)
-        closing.pack(side=tk.LEFT)
-
-        # calculate standard deviation for the stock price over last 1000 days
-        sigma = np.std([price for price in data['Adj Close'][-1000:]])
-
-        volatility_label = tk.Label(self.main_window, text="Volatility: ${:.3f}".format(sigma), padx=10)
-        volatility_label.pack(side=tk.LEFT)
+        closing.pack(side=tk.BOTTOM)
+        opening.pack(side=tk.BOTTOM)
 
     def change_stock(self):
 
         self.root.destroy()
 
         self.__init__()
+
+    def exit(self):
+
+        self.root.destroy()
 
 
 
