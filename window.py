@@ -59,6 +59,7 @@ class Window:
         tick = yf.Ticker(ticker)
 
         hist = tick.history(period='1y')
+        info = tick.info
 
         opening_prices = hist['Open']
         closing_prices = hist['Close']
@@ -75,19 +76,29 @@ class Window:
         change_stock.pack(pady=10, padx=10, side=tk.BOTTOM)
 
         # plot the closing prices for the past year
-        closing_prices.plot(title="Stock Price: " + ticker, ax=ax)
+        closing_prices.plot(title="Stock Price: {} ({})".format(info['longName'], ticker), ax=ax)
 
-        # calculate standard deviation for the stock price over last 1000 days
+        share_label = tk.Label(self.main_window, text="Market Cap: ${:,} | "
+                                                      "Outstanding Shares: {:,}"
+                               .format(info['marketCap'], info['sharesOutstanding']))
+
+        share_label.pack(side=tk.BOTTOM)
+
+        # calculate standard deviation for the stock price over last year
         sigma = np.std([price for price in opening_prices[-1000:]])
-        volatility_label = tk.Label(self.main_window, text="Volatility: ${:.3f}".format(sigma), padx=10)
+        sigma_percentage = np.std([100.0 * a1 / a2 - 100 for a1, a2 in zip(opening_prices[1:], opening_prices)])
+
+        volatility_label = tk.Label(self.main_window, text="Volatility: ${:,.3f} ({:.2f}%)"
+                                    .format(sigma, sigma_percentage), padx=10)
+
         volatility_label.pack(side=tk.BOTTOM)
 
         # closing price from the day before, and closing price from the current day
-        opening = tk.Label(self.main_window, text="Opening: ${:.3f}".format(opening_prices[-1]))
-        closing = tk.Label(self.main_window, text="Closing: ${:.3f}".format(closing_prices[-1]))
+        prices = tk.Label(self.main_window, text="Opening: ${:,.3f} | "
+                                                 "Closing: ${:,.3f}"
+                          .format(opening_prices[-1], closing_prices[-1]))
 
-        closing.pack(side=tk.BOTTOM)
-        opening.pack(side=tk.BOTTOM)
+        prices.pack(side=tk.BOTTOM)
 
     def change_stock(self):
 
