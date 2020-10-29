@@ -2,6 +2,7 @@ import tkinter as tk
 import matplotlib.pyplot as plt
 import yfinance as yf
 import numpy as np
+import info_window
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
@@ -17,6 +18,8 @@ class Window:
         self.button1 = None
         self.ticker_entry = None
         self.ticker_label = None
+        self.prices = None
+        self.info = None
 
         # welcome window asks for a ticker as input
         self.welcome_window = tk.Toplevel(self.root)
@@ -57,14 +60,16 @@ class Window:
     def populate_main(self, ticker):
 
         tick = yf.Ticker(ticker)
-
         hist = tick.history(period='1y')
-        info = tick.info
+        self.info = tick.info
 
-        closing_prices = hist['Close']
+        self.prices = hist['Close']
+
+        info_button = tk.Button(self.main_window, text="Info", command=self.display_info, padx=5, pady=5)
+        info_button.pack(pady=5, side=tk.BOTTOM)
 
         exit_button = tk.Button(self.main_window, text="Exit", command=self.exit, padx=5, pady=5)
-        exit_button.pack(side=tk.TOP, pady=10)
+        exit_button.pack(pady=5, side=tk.TOP)
 
         fig = plt.Figure()
         ax = fig.add_subplot(111)
@@ -78,32 +83,14 @@ class Window:
 
         try:
             # if ticker doesn't have a listed name, just use the stock ticker
-            name = info['longName']
+            name = self.info['longName']
         except KeyError:
             name = ""
 
-        closing_prices.plot(title="Stock Price: {} ({})".format(name, ticker), ax=ax)
+        self.prices.plot(title="Stock Price: {} ({})".format(name, ticker), ax=ax)
 
-        try:
-            share_label = tk.Label(self.main_window, text="Market Cap: ${:,} | "
-                                                          "Outstanding Shares: {:,}"
-                                   .format(info['marketCap'], info['sharesOutstanding']))
-            share_label.pack(side=tk.BOTTOM)
-        except KeyError:
-            # if ticker represents an index, don't include marketCap or sharesOutstanding
-            pass
-
-        # calculate standard deviation for the stock price over last year
-        sigma = np.std([price for price in closing_prices[-1000:]])
-        sigma_percentage = np.std([100.0 * a1 / a2 - 100 for a1, a2 in zip(closing_prices[1:], closing_prices)])
-
-        volatility_label = tk.Label(self.main_window, text="Volatility: ${:,.2f} ({:.2f}%)"
-                                    .format(sigma, sigma_percentage), padx=10)
-
-        volatility_label.pack(side=tk.BOTTOM)
-
-        open = closing_prices[-2]
-        close = closing_prices[-1]
+        open = self.prices[-2]
+        close = self.prices[-1]
 
         # closing price from the day before, and closing price from the current day
         prices = tk.Label(self.main_window, text="Opening: ${:,.2f} | "
@@ -123,6 +110,9 @@ class Window:
         self.root.destroy()
 
         self.__init__()
+
+    def display_info(self):
+        info = info_window.InfoWindow(self.info, self.prices)
 
     def exit(self):
 
