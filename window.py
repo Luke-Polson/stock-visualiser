@@ -34,7 +34,7 @@ class Window:
 
     def populate_welcome(self):
 
-        self.ticker_label = tk.Label(self.welcome_window, text="Enter a stock ticker, eg 'AAPL'",
+        self.ticker_label = tk.Label(self.welcome_window, text="Enter a Stock Ticker",
                                      font=('', 20), padx=10, pady=10)
 
         self.ticker_label.grid(row=0, column=0)
@@ -61,7 +61,6 @@ class Window:
         hist = tick.history(period='1y')
         info = tick.info
 
-        opening_prices = hist['Open']
         closing_prices = hist['Close']
 
         exit_button = tk.Button(self.main_window, text="Exit", command=self.exit, padx=5, pady=5)
@@ -76,27 +75,46 @@ class Window:
         change_stock.pack(pady=10, padx=10, side=tk.BOTTOM)
 
         # plot the closing prices for the past year
-        closing_prices.plot(title="Stock Price: {} ({})".format(info['longName'], ticker), ax=ax)
 
-        share_label = tk.Label(self.main_window, text="Market Cap: ${:,} | "
-                                                      "Outstanding Shares: {:,}"
-                               .format(info['marketCap'], info['sharesOutstanding']))
+        try:
+            # if ticker doesn't have a listed name, just use the stock ticker
+            name = info['longName']
+        except KeyError:
+            name = ""
 
-        share_label.pack(side=tk.BOTTOM)
+        closing_prices.plot(title="Stock Price: {} ({})".format(name, ticker), ax=ax)
+
+        try:
+            share_label = tk.Label(self.main_window, text="Market Cap: ${:,} | "
+                                                          "Outstanding Shares: {:,}"
+                                   .format(info['marketCap'], info['sharesOutstanding']))
+            share_label.pack(side=tk.BOTTOM)
+        except KeyError:
+            # if ticker represents an index, don't include marketCap or sharesOutstanding
+            pass
 
         # calculate standard deviation for the stock price over last year
-        sigma = np.std([price for price in opening_prices[-1000:]])
-        sigma_percentage = np.std([100.0 * a1 / a2 - 100 for a1, a2 in zip(opening_prices[1:], opening_prices)])
+        sigma = np.std([price for price in closing_prices[-1000:]])
+        sigma_percentage = np.std([100.0 * a1 / a2 - 100 for a1, a2 in zip(closing_prices[1:], closing_prices)])
 
-        volatility_label = tk.Label(self.main_window, text="Volatility: ${:,.3f} ({:.2f}%)"
+        volatility_label = tk.Label(self.main_window, text="Volatility: ${:,.2f} ({:.2f}%)"
                                     .format(sigma, sigma_percentage), padx=10)
 
         volatility_label.pack(side=tk.BOTTOM)
 
+        open = closing_prices[-2]
+        close = closing_prices[-1]
+
         # closing price from the day before, and closing price from the current day
-        prices = tk.Label(self.main_window, text="Opening: ${:,.3f} | "
-                                                 "Closing: ${:,.3f}"
-                          .format(opening_prices[-1], closing_prices[-1]))
+        prices = tk.Label(self.main_window, text="Opening: ${:,.2f} | "
+                                                 "Closing: ${:,.2f} | "
+                                                 "({:,.2f}%)"
+                                    .format(open, close, 100 * (close-open) / open))
+
+        if open > close:
+            prices.configure(fg="red")
+        else:
+            prices.configure(fg="green")
 
         prices.pack(side=tk.BOTTOM)
 
