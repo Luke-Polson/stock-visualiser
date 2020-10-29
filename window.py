@@ -1,19 +1,18 @@
 import tkinter as tk
 import matplotlib.pyplot as plt
 import yfinance as yf
-import numpy as np
 import info_window
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
-class Window:
+class Window(tk.Tk):
 
     def __init__(self):
 
-        # initialise root window
-        self.root = tk.Tk()
-        self.root.withdraw()
+        tk.Tk.__init__(self)
+
+        self.withdraw()
 
         self.button1 = None
         self.ticker_entry = None
@@ -22,22 +21,22 @@ class Window:
         self.info = None
 
         # welcome window asks for a ticker as input
-        self.welcome_window = tk.Toplevel(self.root)
+        self.welcome_window = tk.Toplevel(self)
         self.welcome_window.title("Please enter a valid ticker")
 
         # main window to display stock info
-        self.main_window = tk.Toplevel(self.root)
+        self.main_window = tk.Toplevel(self)
         self.main_window.title("Stock Visualiser")
 
         self.populate_welcome()
 
         self.main_window.withdraw()
 
-        self.root.mainloop()
+        self.mainloop()
 
     def populate_welcome(self):
 
-        self.ticker_label = tk.Label(self.welcome_window, text="Enter a Stock Ticker",
+        self.ticker_label = tk.Label(self.welcome_window, text="Enter a Ticker",
                                      font=('', 20), padx=10, pady=10)
 
         self.ticker_label.grid(row=0, column=0)
@@ -62,6 +61,8 @@ class Window:
         tick = yf.Ticker(ticker)
         hist = tick.history(period='1y')
         self.info = tick.info
+
+        print(tick.info)
 
         self.prices = hist['Close']
 
@@ -95,8 +96,7 @@ class Window:
         # closing price from the day before, and closing price from the current day
         prices = tk.Label(self.main_window, text="Opening: ${:,.2f} | "
                                                  "Closing: ${:,.2f} | "
-                                                 "({:,.2f}%)"
-                                    .format(open, close, 100 * (close-open) / open))
+                                                 "({:,.2f}%)".format(open, close, 100 * (close-open) / open))
 
         if open > close:
             prices.configure(fg="red")
@@ -107,16 +107,17 @@ class Window:
 
     def change_stock(self):
 
-        self.root.destroy()
+        self.destroy()
 
         self.__init__()
 
     def display_info(self):
+
         info = info_window.InfoWindow(self.info, self.prices)
 
     def exit(self):
 
-        self.root.destroy()
+        self.destroy()
 
 
 

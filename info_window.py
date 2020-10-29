@@ -17,19 +17,37 @@ class InfoWindow(tk.Tk):
 
         self.mainloop()
 
-
     def populate_window(self):
 
         closing_prices = self.prices
+        try:
+            avg_volume = tk.Label(self, text="Average Volume: {:,}".format(self.info['averageVolume']))
+            avg_volume.pack(side=tk.BOTTOM)
+        except (KeyError, TypeError):
+            pass
 
         try:
-            market_cap = tk.Label(self, text="Market Cap: ${:,} | ".format(self.info['marketCap']))
+            eps = tk.Label(self, text="EPS (TTM): {:.2f}".format(self.info['trailingEps']))
+            eps.pack(side=tk.BOTTOM)
+        except (KeyError, TypeError):
+            pass
+
+        try:
+            pe_ratio = tk.Label(self, text="P/E Ratio (TTM): {:.2f}".format(self.info['trailingPE']))
+            pe_ratio.pack(side=tk.BOTTOM)
+
+        except KeyError:
+            # pass if the ticker has no p/e ratio listed
+            pass
+
+        try:
+            market_cap = tk.Label(self, text="Market Cap: ${:,}".format(self.info['marketCap']))
             market_cap.pack(side=tk.BOTTOM)
 
             shares_outstanding = tk.Label(self,text="Outstanding Shares: {:,}".format(self.info['sharesOutstanding']))
             shares_outstanding.pack(side=tk.BOTTOM)
 
-        except KeyError:
+        except (KeyError, TypeError):
             # if ticker represents an index, don't include marketCap or sharesOutstanding
             pass
 
